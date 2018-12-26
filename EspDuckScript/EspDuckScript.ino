@@ -24,55 +24,55 @@
   License:
   Please see attached LICENSE.txt file for details.
 ------------------------------------------------------------------------------*/
+#include "requests.h"
+#include "message.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#include <DNSServer.h>
 
 ESP8266WebServer server;
-uint8_t pin_led = 2;
-char* ssid = "YOUR_SSID";
-char* password = "YOUR_PASSWORD";
-
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
+uint8_t pin_led = 2; // If you are using a module, keep the value, if you are using a NodeMCU, use 16, otherwise just Google it.
+char* ssid = "UnDuck"; //TODO: Config in the SPIFFS
+char* password = "g3t_duck3d"; //TODO: Config in the SPIFFS
+IPAddress apIP(10, 10, 10, 10);
+IPAddress netMask(255, 255, 255, 0);
 void setup()
+
 {
   SPIFFS.begin();
   pinMode(pin_led, OUTPUT);
-  WiFi.begin(ssid,password);
+  WiFi.softAPConfig(apIP, apIP, netMask);
+  WiFi.softAP(ssid,password);
   Serial.begin(115200);
-  while(WiFi.status()!=WL_CONNECTED)
-  {
-    Serial.print(".");
-    delay(500);
-  }
-  Serial.println("");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
-
-  server.on("/",serveIndexFile);
-  server.on("/ledstate",getLEDState);
+  Serial.println("30*_STATUS*_ONLINE");
+  server.on("/", serveIndex);
+  server.on("/index.html", serveIndex);
+  server.on("/console.html", serveConsole);
+  server.onNotFound(serveNotFound);
   server.begin();
+  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  dnsServer.start(DNS_PORT, "*", apIP);
 }
 
-void loop()
-{
+void loop() {
+  dnsServer.processNextRequest();
   server.handleClient();
 }
 
-void serveIndexFile()
-{
-  File file = SPIFFS.open("/index.html","r");
+void serveFile(String path) {
+  File file = SPIFFS.open(path ,"r");
   server.streamFile(file, "text/html");
   file.close();
 }
 
-void toggleLED()
-{
-  digitalWrite(pin_led,!digitalRead(pin_led));
+
+void serveNotFound() {
+  File file = SPIFFS.open("/notfound.html", "rr");
 }
 
-void getLEDState()
-{
-  toggleLED();
-  String led_state = digitalRead(pin_led) ? "OFF" : "ON";
-  server.send(200,"text/plain", led_state);
+void toggleLED() {
+  digitalWrite(pin_led,!digitalRead(pin_led));
 }

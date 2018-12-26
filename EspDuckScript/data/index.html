@@ -1,0 +1,18 @@
+<html>
+	<head>
+		<title>UnDuck BadUSB</title>
+		<script  src="lib.js"></script>
+		<script>
+			function refreshStatus() {
+				document.getElementById("status").innerHTML = httpGet("status");
+			}
+		</script>
+	</head>
+	
+	<body>
+		<h1 style="text-align: center;">UnDuck</h1>
+		<p style="text-align: center;">Work in Progress!</p>
+		<p style="text-align: center;">Status: <span id="status">UKNOWN</span> <button onclick="refreshStatus();">Refresh</button></p>
+		<div style="text-align: center" ><button>Payloads</button> <button>Shell</button> <button>HID/USB</button> <button>Console</button></div>
+	</body>
+</html>
